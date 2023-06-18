@@ -8,6 +8,10 @@ on:
 defaults:
   run:
     shell: pwsh
+
+permissions:
+  contents: write
+  pull-requests: write
     
 jobs:
   build-and-publish:
@@ -18,8 +22,6 @@ jobs:
     
     - name: Set up dotnet
       uses: actions/setup-dotnet@v3
-      with:
-        global-json-files: gobal.json
    
     - name: Restore with dotnet
       run: dotnet restore 
@@ -36,10 +38,13 @@ jobs:
         name: app
         path: ${{ github.workspace}}/Release/
         if-no-files-found: error
-  run:
+  run-and-commit:
     runs-on: windows-latest
     needs: build-and-publish
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
       - name: Download artifact from build and publish
         uses: actions/download-artifact@v3
         with:
@@ -47,6 +52,20 @@ jobs:
           path: App/
           
       - name: Run
-        run: ./App/TestConsoleApplication.exe
-          
-    
+        run: ./App/TestConsoleApplication.exe | Out-File (New-Item -Path "${{ github.workspace }}/LastWorkflowOutput/Result.txt" -Force)
+
+      - name: Create new PR and branch
+        run: |
+          $date = "$(Get-Date -Format yyyy-MM-dd)"
+          $branchName = "Workflow/$date"
+          echo 'Branch: ($branchName)'
+          git pull origin main
+          git config --local user.email "joshua.willis@intellitect.com"
+          git config --local user.name "test-cicd-bot"
+          git checkout -b '($branchName)'
+          git add .
+          git commit -m "chore(content): regenerate random $date"
+          git push -u origin '($branchName)' --force
+          gh pr create --title "chore (content): regenerate random on $date" --fill --label ci-sync --base "main"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
