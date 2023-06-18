@@ -38,9 +38,11 @@ jobs:
         name: app
         path: ${{ github.workspace}}/Release/
         if-no-files-found: error
+
   run-and-commit:
     runs-on: windows-latest
     needs: build-and-publish
+    environment: commit-content
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
