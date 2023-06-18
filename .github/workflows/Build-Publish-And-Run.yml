@@ -1,0 +1,54 @@
+name: Build and Run
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+  
+defaults:
+  run:
+    shell: pwsh
+    
+jobs:
+  build-and-publish:
+    runs-on: windows-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Set up dotnet
+      uses: actions/setup-dotnet@v3
+      with:
+        global-json-files: gobal.json
+   
+    - name: Restore with dotnet
+      run: dotnet restore 
+    
+    - name: Build with dotnet
+      run: dotnet build --configuration Release --no-restore
+    
+    - name: Publish using dotnet
+      run: dotnet publish --configuration Release --no-build --output "${{ github.workspace }}/Release" 
+      
+    - name: Upload artifacts for running
+      uses: actions/upload-artifact@v3
+      with:
+        name: app
+        path: ${{ github.workspace}}/Release/
+        if-no-files-found: error
+  run:
+    runs-on: windows-latest
+    steps:
+      - name: Set up dotnet
+        uses: actions/setup-dotnet@v3
+      
+      - name: Download artifacts from build and publish
+        uses: actions/download-artifacts@v3
+        with:
+          name: app
+          path: App/
+          
+      - name: Run
+        run: dotnet run ./App/TestConsoleApplication.dll
+          
+    
