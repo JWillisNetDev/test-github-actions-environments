@@ -38,9 +38,11 @@ jobs:
         name: app
         path: ${{ github.workspace}}/Release/
         if-no-files-found: error
+
   run-and-commit:
     runs-on: windows-latest
     needs: build-and-publish
+    environment: commit-content
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -62,10 +64,10 @@ jobs:
           git pull origin main
           git config --local user.email "joshua.willis@intellitect.com"
           git config --local user.name "test-cicd-bot"
-          git checkout -b '$branchName'
+          git checkout -b $branchName
           git add .
           git commit -m "chore(content): regenerate random $date"
-          git push -u origin '$branchName' --force
+          git push -u origin $branchName --force
           gh pr create --title "chore (content): regenerate random on $date" --fill --label ci-sync --base "main"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
