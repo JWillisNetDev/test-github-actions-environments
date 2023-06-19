@@ -40,7 +40,8 @@ jobs:
         if-no-files-found: error
 
   run-and-commit:
-    if: github.event.pull_request.merged == 'false'
+    #if: github.event.pull_request.merged == 'true'
+    environment: commit-content
     runs-on: windows-latest
     needs: build-and-publish
     steps:
